@@ -1,0 +1,31 @@
+name: Manual Build for MIPS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # 1. 安装 Rust 工具链
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: mipsel-unknown-linux-musl  # 为交叉编译添加目标[reference:10]
+          override: true
+
+      # 2. 编译程序
+      - name: Build
+        run: cargo build --release --target mipsel-unknown-linux-musl
+
+      # 3. 上传编译结果 (Artifact)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: quarkdrive-webdav-mips
+          path: target/mipsel-unknown-linux-musl/release/quarkdrive-webdav
