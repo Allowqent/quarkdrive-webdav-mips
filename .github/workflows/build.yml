@@ -1,8 +1,8 @@
-name: Manual Build for MIPS Soft-Float
+name: Build for MIPS Soft-Float (OpenWrt)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
@@ -12,12 +12,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 增加 +crt-static 开启完全静态编译，彻底摆脱路由器动态库依赖
+      # 使用 messense/rust-musl-cross 镜像
+      # 指定安装特定日期的纯净 nightly 版本，绕过镜像自带组件损坏的 bug
+      # 注入 RUSTFLAGS 强制开启软浮点
       - name: Build with rust-musl-cross (Soft-Float)
         run: |
           docker run --rm \
             -e CARGO_PROFILE_RELEASE_LTO="false" \
-            -e RUSTFLAGS="-C target-feature=+soft-float,+crt-static" \
+            -e RUSTFLAGS="-C target-feature=+soft-float" \
             -v ${{ github.workspace }}:/home/rust/src \
             messense/rust-musl-cross:mipsel-musl \
             bash -c "rustup toolchain install nightly-2026-08-01 --profile minimal && \
@@ -25,9 +27,9 @@ jobs:
                      cargo +nightly-2026-08-01 build --release -Z build-std=std,panic_abort --target mipsel-unknown-linux-musl"
           sudo chown -R $USER:$USER target/
 
-      # 提取并上传编译结果
+      # 上传生成的二进制文件
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quarkdrive-webdav-mips-softfloat-static
+          name: quarkdrive-webdav-mips-softfloat
           path: target/mipsel-unknown-linux-musl/release/quarkdrive-webdav
