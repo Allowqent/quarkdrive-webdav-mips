@@ -12,19 +12,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. 安装最新版 Rust 工具链 (去掉了之前的 targets 行)
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      # 直接使用专门为 MIPS musl 打包的 Docker 镜像进行跨平台编译
+      - name: Build with rust-musl-cross
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/home/rust/src messense/rust-musl-cross:mipsel-musl cargo build --release
+          sudo chown -R $USER:$USER target/
 
-      # 2. 安装 cross 工具 (它自带 MIPS 的完整编译环境)
-      - name: Install Cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
-      # 3. 编译程序
-      - name: Build
-        run: cross build --release --target mipsel-unknown-linux-musl
-
-      # 4. 上传编译结果
+      # 提取并上传编译好的二进制文件
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
