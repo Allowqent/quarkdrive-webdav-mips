@@ -1,4 +1,4 @@
-name: Manual Build for MIPS
+name: Manual Build for MIPS Soft-Float
 
 on:
   push:
@@ -12,15 +12,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 注入环境变量关闭 LTO，解决 bitcode 冲突报错
-      - name: Build with rust-musl-cross
+      # 使用 Nightly 工具链并开启软浮点编译，连同标准库一起重新构建
+      - name: Build with rust-musl-cross (Soft-Float)
         run: |
-          docker run --rm -e CARGO_PROFILE_RELEASE_LTO="false" -v ${{ github.workspace }}:/home/rust/src messense/rust-musl-cross:mipsel-musl cargo build --release
+          docker run --rm \
+            -e CARGO_PROFILE_RELEASE_LTO="false" \
+            -e RUSTFLAGS="-C target-feature=+soft-float" \
+            -v ${{ github.workspace }}:/home/rust/src \
+            messense/rust-musl-cross:mipsel-musl \
+            bash -c "rustup toolchain install nightly && \
+                     rustup component add rust-src --toolchain nightly && \
+                     cargo +nightly build --release -Z build-std=std,panic_abort --target mipsel-unknown-linux-musl"
           sudo chown -R $USER:$USER target/
 
       # 提取并上传编译结果
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quarkdrive-webdav-mips
+          name: quarkdrive-webdav-mips-softfloat
           path: target/mipsel-unknown-linux-musl/release/quarkdrive-webdav
