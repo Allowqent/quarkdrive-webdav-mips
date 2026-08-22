@@ -12,13 +12,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 直接使用专门为 MIPS musl 打包的 Docker 镜像进行跨平台编译
+      # 注入环境变量关闭 LTO，解决 bitcode 冲突报错
       - name: Build with rust-musl-cross
         run: |
-          docker run --rm -v ${{ github.workspace }}:/home/rust/src messense/rust-musl-cross:mipsel-musl cargo build --release
+          docker run --rm -e CARGO_PROFILE_RELEASE_LTO="false" -v ${{ github.workspace }}:/home/rust/src messense/rust-musl-cross:mipsel-musl cargo build --release
           sudo chown -R $USER:$USER target/
 
-      # 提取并上传编译好的二进制文件
+      # 提取并上传编译结果
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
