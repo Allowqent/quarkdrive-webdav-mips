@@ -12,17 +12,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. 安装最新版 Rust 工具链 (替代老旧的 actions-rs)
+      # 1. 安装最新版 Rust 工具链 (去掉了之前的 targets 行)
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: mipsel-unknown-linux-musl
 
-      # 2. 安装 cross 工具 (专门解决交叉编译缺少依赖的问题)
+      # 2. 安装 cross 工具 (它自带 MIPS 的完整编译环境)
       - name: Install Cross
         run: cargo install cross --git https://github.com/cross-rs/cross
 
-      # 3. 编译程序 (用 cross 替代 cargo)
+      # 3. 编译程序
       - name: Build
         run: cross build --release --target mipsel-unknown-linux-musl
 
