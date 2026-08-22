@@ -9,23 +9,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # 1. 安装 Rust 工具链
+      # 1. 安装最新版 Rust 工具链 (替代老旧的 actions-rs)
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: mipsel-unknown-linux-musl  # 为交叉编译添加目标[reference:10]
-          override: true
+          targets: mipsel-unknown-linux-musl
 
-      # 2. 编译程序
+      # 2. 安装 cross 工具 (专门解决交叉编译缺少依赖的问题)
+      - name: Install Cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      # 3. 编译程序 (用 cross 替代 cargo)
       - name: Build
-        run: cargo build --release --target mipsel-unknown-linux-musl
+        run: cross build --release --target mipsel-unknown-linux-musl
 
-      # 3. 上传编译结果 (Artifact)
+      # 4. 上传编译结果
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: quarkdrive-webdav-mips
           path: target/mipsel-unknown-linux-musl/release/quarkdrive-webdav
