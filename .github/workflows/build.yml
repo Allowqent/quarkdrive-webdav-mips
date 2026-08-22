@@ -12,7 +12,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 使用 Nightly 工具链并开启软浮点编译（增加 --profile minimal 修复 clippy 报错）
+      # 绕过镜像损坏的默认版本，指定安装 2026-08-01 的纯净版 Nightly
       - name: Build with rust-musl-cross (Soft-Float)
         run: |
           docker run --rm \
@@ -20,9 +20,9 @@ jobs:
             -e RUSTFLAGS="-C target-feature=+soft-float" \
             -v ${{ github.workspace }}:/home/rust/src \
             messense/rust-musl-cross:mipsel-musl \
-            bash -c "rustup toolchain install nightly --profile minimal && \
-                     rustup component add rust-src --toolchain nightly && \
-                     cargo +nightly build --release -Z build-std=std,panic_abort --target mipsel-unknown-linux-musl"
+            bash -c "rustup toolchain install nightly-2026-08-01 --profile minimal && \
+                     rustup component add rust-src --toolchain nightly-2026-08-01 && \
+                     cargo +nightly-2026-08-01 build --release -Z build-std=std,panic_abort --target mipsel-unknown-linux-musl"
           sudo chown -R $USER:$USER target/
 
       # 提取并上传编译结果
