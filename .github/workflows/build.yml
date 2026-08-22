@@ -1,8 +1,9 @@
-name: Build for MIPS Soft-Float (OpenWrt)
+
+name: Manual Build for MIPS Soft-Float
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -12,9 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 使用 messense/rust-musl-cross 镜像
-      # 指定安装特定日期的纯净 nightly 版本，绕过镜像自带组件损坏的 bug
-      # 注入 RUSTFLAGS 强制开启软浮点
+      # 绕过镜像损坏的默认版本，指定安装 2026-08-01 的纯净版 Nightly
       - name: Build with rust-musl-cross (Soft-Float)
         run: |
           docker run --rm \
@@ -26,8 +25,7 @@ jobs:
                      rustup component add rust-src --toolchain nightly-2026-08-01 && \
                      cargo +nightly-2026-08-01 build --release -Z build-std=std,panic_abort --target mipsel-unknown-linux-musl"
           sudo chown -R $USER:$USER target/
-
-      # 上传生成的二进制文件
+      # 提取并上传编译结果
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
